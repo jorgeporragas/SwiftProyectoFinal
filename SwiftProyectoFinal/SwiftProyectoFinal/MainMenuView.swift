@@ -88,10 +88,31 @@ struct SettingsView: View {
     }
 }
 
-// Pantalla de Selección de Dificultad (Siguiente paso)
+// Pantalla de Selección de Dificultad
 struct DifficultySelectionView: View {
+    // Creamos un nivel de prueba "hardcodeado"
+    let sampleLevel = GameLevel(
+        title: "Homófonos",
+        description: "Vaya vs Valla",
+        questions: [
+            Question(textPart1: "Espero que te", textPart2: "bien.", correctAnswer: "vaya", options: ["vaya", "valla"]),
+            Question(textPart1: "Salta la", textPart2: "con cuidado.", correctAnswer: "valla", options: ["vaya", "valla"])
+        ]
+    )
+    
     var body: some View {
-        Text("Selecciona tu dificultad")
-            .font(.title)
+        VStack {
+            Text("Selecciona un Nivel")
+                .font(.largeTitle)
+            
+            // Botón temporal para probar el juego
+            NavigationLink(destination: GameplayView(level: sampleLevel)) {
+                Text("Nivel 1: Vaya vs Valla")
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+        }
     }
 }

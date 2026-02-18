@@ -14,6 +14,8 @@ struct ContentView: View {
     var body: some View {
         if isAppActive {
             UserSelectionView()
+                // Esto hace que la nueva pantalla entre suavemente
+                .transition(.opacity.animation(.easeInOut(duration: 1.0)))
         } else {
             SplashScreenView(isActive: $isAppActive)
         }

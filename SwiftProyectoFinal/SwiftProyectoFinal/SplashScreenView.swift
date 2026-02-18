@@ -30,9 +30,10 @@ struct SplashScreenView: View {
                 .foregroundColor(.gray)
         }
         .onAppear {
-            // Lógica para que desaparezca después de 2 segundos
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                withAnimation {
+            // Retrasamos un poco el inicio para que se alcance a ver el logo
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                // Aquí definimos la duración del "Fade Out"
+                withAnimation(.easeOut(duration: 1.5)) {
                     self.isActive = true
                 }
             }
