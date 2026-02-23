@@ -8,31 +8,35 @@
 import SwiftUI
 import Combine
 
-
 struct SplashScreenView: View {
-    // Binding nos permite comunicar hacia afuera que el splash terminó
     @Binding var isActive: Bool
+    
+    // Esta variable controla la invisibilidad inicial
+    @State private var logoOpacity = 0.0
     
     var body: some View {
         VStack(spacing: 20) {
-            // Logo (Usamos un icono del sistema por ahora como placeholder)
             Image(systemName: "text.book.closed.fill")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 100, height: 100)
                 .foregroundColor(.blue)
             
-            // Descripción
             Text("Este juego tiene como propósito enseñar gramática y ortografía en español")
                 .font(.headline)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
                 .foregroundColor(.gray)
         }
+        .opacity(logoOpacity) // Aplicamos la opacidad a todo el bloque
         .onAppear {
-            // Retrasamos un poco el inicio para que se alcance a ver el logo
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                // Aquí definimos la duración del "Fade Out"
+            // 1. FADE IN: Tarda 2.5 segundos en aparecer completamente
+            withAnimation(.easeIn(duration: 2.5)) {
+                logoOpacity = 1.0
+            }
+            
+            // 2. FADE OUT: Espera 4 segundos en total, y hace la transición suave a la app
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                 withAnimation(.easeOut(duration: 1.5)) {
                     self.isActive = true
                 }

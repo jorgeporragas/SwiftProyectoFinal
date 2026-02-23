@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import CoreData
 
 // 1. Modelo: Qué es un usuario
 struct User: Identifiable, Codable, Equatable {
@@ -17,28 +18,60 @@ struct User: Identifiable, Codable, Equatable {
 
 // 2. ViewModel: El cerebro que maneja los datos
 class GameViewModel: ObservableObject {
-    // @Published avisa a la vista cuando los datos cambian para que se redibuje
-    @Published var users: [User] = []
+    // 1. El contenedor de nuestra base de datos
+    let container = NSPersistentContainer(name: "GrammarGameModel")
     
-    // Función para agregar usuario
-    func addUser(name: String) {
-        // Validación de límite de 5 usuarios
-        if users.count < 5 {
-            let newUser = User(name: name)
-            users.append(newUser)
-            // Aquí podrías guardar en UserDefaults o CoreData
+    // 2. Nuestra lista publicada ahora usa UserEntity de Core Data
+    @Published var users: [UserEntity] = []
+    
+    init() {
+        // 3. Cargamos la base de datos al iniciar el ViewModel
+        container.loadPersistentStores { description, error in
+            if let error = error {
+                print("Error al cargar Core Data: \(error.localizedDescription)")
+            }
+        }
+        // Obtenemos los usuarios guardados
+        fetchUsers()
+    }
+    
+    // --- OPERACIONES CRUD (Create, Read, Update, Delete) ---
+    
+    func fetchUsers() {
+        let request = NSFetchRequest<UserEntity>(entityName: "UserEntity")
+        
+        do {
+            users = try container.viewContext.fetch(request)
+        } catch {
+            print("Error al obtener usuarios: \(error)")
         }
     }
     
-    // Función para borrar usuario
-    func deleteUser(at offsets: IndexSet) {
-        users.remove(atOffsets: offsets)
-        // Aquí actualizarías el guardado
+    func addUser(name: String) {
+        if users.count < 5 {
+            // Creamos un nuevo objeto en el contexto de Core Data
+            let newUser = UserEntity(context: container.viewContext)
+            newUser.id = UUID()
+            newUser.name = name
+            newUser.highScore = 0
+            
+            saveData()
+        }
     }
     
-    func deleteUser(_ user: User) {
-        if let index = users.firstIndex(of: user) {
-            users.remove(at: index)
+    func deleteUser(_ user: UserEntity) {
+        // Le decimos a Core Data que elimine el objeto
+        container.viewContext.delete(user)
+        saveData()
+    }
+    
+    // Función centralizada para guardar y refrescar la vista
+    private func saveData() {
+        do {
+            try container.viewContext.save()
+            fetchUsers() // Refrescamos el arreglo @Published para que la UI se actualice
+        } catch {
+            print("Error al guardar datos: \(error)")
         }
     }
 }

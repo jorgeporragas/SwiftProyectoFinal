@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct GameplayView: View {
     let level: GameLevel
+    let user: UserEntity
     @Environment(\.dismiss) var dismiss
-
+    
     // --- ESTADO DEL JUEGO ---
     @State private var currentQuestionIndex = 0
     @State private var lives = 3
@@ -27,11 +29,16 @@ struct GameplayView: View {
     // --- ESTADO DE RESPUESTA ---
     @State private var answerIsCorrect: Bool? = nil
     @State private var characterFace: String = "😐"
-
+    
+    @State private var shuffledQuestions: [Question] = []
+    
     var currentQuestion: Question {
-        level.questions[currentQuestionIndex]
+        if shuffledQuestions.isEmpty {
+            return level.questions[0]
+        }
+        return shuffledQuestions[currentQuestionIndex]
     }
-
+    
     var body: some View {
         ZStack {
             Color.white.ignoresSafeArea()
@@ -214,6 +221,10 @@ struct GameplayView: View {
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            // Cuando la pantalla aparece, revolvemos el arreglo del nivel
+            shuffledQuestions = level.questions.shuffled()
+        }
         .alert("¡Juego Terminado!", isPresented: $isGameOver) {
             Button("Salir") { dismiss() }
         } message: {
@@ -242,21 +253,36 @@ struct GameplayView: View {
     // --- LÓGICA DE JUEGO ---
     
     func handleButtonAction() {
-        if answerIsCorrect == nil {
-            guard let selected = selectedAnswer else { return }
-            if selected == currentQuestion.correctAnswer {
-                answerIsCorrect = true
-                characterFace = "😎"
+            if answerIsCorrect == nil {
+                guard let selected = selectedAnswer else { return }
+                
+                if selected == currentQuestion.correctAnswer {
+                    // --- ¡RESPUESTA CORRECTA! ---
+                    answerIsCorrect = true
+                    characterFace = "😎"
+                    
+                    // 1. Le sumamos 10 puntos al usuario
+                    user.highScore += 10
+                    
+                    // 2. Le decimos a Core Data que guarde el cambio
+                    do {
+                        try user.managedObjectContext?.save()
+                        print("Puntos guardados. Nuevo récord: \(user.highScore)")
+                    } catch {
+                        print("Error al guardar puntos: \(error)")
+                    }
+                    
+                } else {
+                    // Incorrecto (esto se queda igual)
+                    answerIsCorrect = false
+                    characterFace = "😢"
+                    lives -= 1
+                    if lives == 0 { isGameOver = true }
+                }
             } else {
-                answerIsCorrect = false
-                characterFace = "😢"
-                lives -= 1
-                if lives == 0 { isGameOver = true }
+                nextQuestion()
             }
-        } else {
-            nextQuestion()
         }
-    }
     
     func nextQuestion() {
         if currentQuestionIndex < level.questions.count - 1 {

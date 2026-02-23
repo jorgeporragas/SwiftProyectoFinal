@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import CoreData
 
 struct UserSelectionView: View {
     @StateObject var viewModel = GameViewModel() // Instanciamos el cerebro
@@ -15,7 +16,7 @@ struct UserSelectionView: View {
     
     // Variables para controlar la alerta de borrado
     @State private var showingDeleteConfirmation = false
-    @State private var userToDelete: User?
+    @State private var userToDelete: UserEntity?
     
     var body: some View {
         NavigationStack {
@@ -95,22 +96,42 @@ struct UserSelectionView: View {
         List {
             ForEach(viewModel.users) { user in
                 NavigationLink(destination: MainMenuView(user: user)) {
-                    HStack {
-                        Image(systemName: "person.circle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.blue)
-                        VStack(alignment: .leading) {
-                            Text(user.name)
-                                .font(.headline)
-                            Text("Puntaje: \(user.highScore)")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                    
+                    // ZStack nos permite poner la barra de progreso de fondo
+                    ZStack(alignment: .leading) {
+                        
+                        // --- BARRA DE PROGRESO INVISIBLE/FONDO ---
+                        GeometryReader { geo in
+                            Rectangle()
+                                .fill(Color.blue.opacity(0.15)) // Color suave para la barra
+                            // El ancho es el porcentaje de progreso multiplicado por el ancho total
+                                .frame(width: geo.size.width * CGFloat(user.progressToNextLevel))
                         }
+                        
+                        // --- CONTENIDO DE LA FILA ---
+                        HStack(spacing: 20) {
+                            // Número del Nivel (En lugar del ícono)
+                            Text("\(user.currentLevel)")
+                                .font(.system(size: 40, weight: .black, design: .rounded))
+                                .foregroundColor(.blue)
+                                .frame(width: 50) // Ancho fijo para que los nombres queden alineados
+                            
+                            VStack(alignment: .leading) {
+                                Text(user.name ?? "Desconocido")
+                                    .font(.headline)
+                                Text("\(user.highScore) XP")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding(.vertical, 8)
                     }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
-                        // En lugar de borrar directo, guardamos a quién queremos borrar y mostramos alerta
+                            // En lugar de borrar directo, guardamos a quién queremos borrar y mostramos alerta
                         userToDelete = user
                         showingDeleteConfirmation = true
                     } label: {

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MainMenuView: View {
-    var user: User // Recibimos el usuario seleccionado
+    var user: UserEntity
     
     // Esta variable nos permite "matar" esta vista y regresar a la anterior
     @Environment(\.dismiss) var dismiss
@@ -27,7 +27,7 @@ struct MainMenuView: View {
                 // Botones Centrales (Jugar y Ajustes)
                 HStack(spacing: 60) {
                     // Botón Jugar
-                    NavigationLink(destination: DifficultySelectionView()) {
+                    NavigationLink(destination: DifficultySelectionView(user: user)) {
                         VStack {
                             Image(systemName: "play.fill")
                                 .resizable()
@@ -90,29 +90,74 @@ struct SettingsView: View {
 
 // Pantalla de Selección de Dificultad
 struct DifficultySelectionView: View {
-    // Creamos un nivel de prueba "hardcodeado"
-    let sampleLevel = GameLevel(
-        title: "Homófonos",
-        description: "Vaya vs Valla",
-        questions: [
-            Question(textPart1: "Espero que te", textPart2: "bien.", correctAnswer: "vaya", options: ["vaya", "valla"]),
-            Question(textPart1: "Salta la", textPart2: "con cuidado.", correctAnswer: "valla", options: ["vaya", "valla"])
-        ]
-    )
+    let user: UserEntity
+    @Environment(\.dismiss) var dismiss
     
+    var body: some View {
+        VStack(spacing: 30) {
+            
+            // Encabezado
+            HStack {
+                Button(action: { dismiss() }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+                Spacer()
+                Text("Selecciona un Nivel")
+                    .font(.title)
+                    .bold()
+                Spacer()
+                // Espaciador invisible para balancear el botón de regreso
+                Image(systemName: "chevron.left").opacity(0)
+            }
+            .padding(.horizontal)
+            .padding(.top, 20)
+            
+            // Lista de Niveles Dinámica
+            ScrollView {
+                VStack(spacing: 20) {
+                    ForEach(LevelData.allLevels) { level in
+                        NavigationLink(destination: GameplayView(level: level, user: user)) {
+                            // Tarjeta de Nivel
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(level.title)
+                                    .font(.title2)
+                                    .bold()
+                                    .foregroundColor(.white)
+                                
+                                Text(level.description)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .multilineTextAlignment(.leading)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.blue)
+                            .cornerRadius(15)
+                            .shadow(radius: 5)
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+            }
+        }
+        .navigationBarHidden(true)
+    }
+}
+
+/*
+
     var body: some View {
         VStack {
             Text("Selecciona un Nivel")
                 .font(.largeTitle)
-            
-            // Botón temporal para probar el juego
-            NavigationLink(destination: GameplayView(level: sampleLevel)) {
-                Text("Nivel 1: Vaya vs Valla")
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+
+            ForEach(LevelData.allLevels) { level in
+                NavigationLink(destination: GameplayView(level: level)) {
+                }
             }
         }
     }
-}
+
+*/
